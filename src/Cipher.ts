@@ -110,8 +110,7 @@ export default class Cipher
         for(const vector of vectors)
         {
             const flip =  Math.random() < 0.5;
-            const index = (vector[flip ? 1 : 0] * symbols.length) + vector[flip ? 0 : 1];
-            out.push(this.keyValues[index]);
+            out.push(this.keyValues[(vector[flip ? 1 : 0] * symbols.length) + vector[flip ? 0 : 1]]);
         }
 
         return Cipher.stringify(out);
@@ -120,16 +119,12 @@ export default class Cipher
     public decode(encoded: string): string
     {
         const encodedNumbers = Cipher.parse(encoded)
-
         const decodedVectors: StringVector[] = [];
 
         for(const num of encodedNumbers)
         {
             const index = this.keyValues.indexOf(num);
-            const Vector0 = Cipher.decodeSymbol(Math.floor(index / symbols.length))
-            const Vector1 = Cipher.decodeSymbol(index % symbols.length)
-
-            decodedVectors.push([Vector0, Vector1]);
+            decodedVectors.push([Cipher.decodeSymbol(Math.floor(index / symbols.length)), Cipher.decodeSymbol(index % symbols.length)]);
         }
 
         for(let i = 0; i < decodedVectors.length -1; i++)
