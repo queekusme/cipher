@@ -1,6 +1,6 @@
 # This is a completely mad cipher idea I came up with on a whim...
 
-It works, but its probably very iunefficiant
+It works, but its probably very inefficiant
 
 ## Keg Generation
 
