@@ -14,7 +14,7 @@ D 72 73 74 75 ...
 ...
 ```
 
-This is then shuffled to provide a key. this creates "(symbol count)^1 factorial" possible keys which is quite big imho haha
+This is then shuffled to provide a key. This creates "(symbol count)^2 factorial" possible keys which is quite big imho haha
 
 ## Encoding
 To encode a string the string is split into vectors so Hello World would be:
