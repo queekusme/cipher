@@ -1,39 +1,20 @@
-export enum Index
-{
-    A = 0, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
-    a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,
-    Zero, One, Two, Three, Four, Five, Six, Seven, Eight, Nine,
-    Space // TODO Add symbols
-}
-
-const symbolToIndex: { [key: string]: Index } = {
-    "A": Index.A, "B": Index.B, "C": Index.C,
-    "D": Index.D, "E": Index.E, "F": Index.F,
-    "G": Index.G, "H": Index.H, "I": Index.I,
-    "J": Index.J, "K": Index.K, "L": Index.L,
-    "M": Index.M, "N": Index.N, "O": Index.O,
-    "P": Index.P, "Q": Index.Q, "R": Index.R,
-    "S": Index.S, "T": Index.T, "U": Index.U,
-    "V": Index.V, "W": Index.W, "X": Index.X,
-    "Y": Index.Y, "Z": Index.Z,
-    "a": Index.a, "b": Index.b, "c": Index.c,
-    "d": Index.d, "e": Index.e, "f": Index.f,
-    "g": Index.g, "h": Index.h, "i": Index.i,
-    "j": Index.j, "k": Index.k, "l": Index.l,
-    "m": Index.m, "n": Index.n, "o": Index.o,
-    "p": Index.p, "q": Index.q, "r": Index.r,
-    "s": Index.s, "t": Index.t, "u": Index.u,
-    "v": Index.v, "w": Index.w, "x": Index.x,
-    "y": Index.y, "z": Index.z,
-    "0": Index.Zero, "1": Index.One, "2": Index.Two,
-    "3": Index.Three, "4": Index.Four, "5": Index.Five,
-    "6": Index.Six, "7": Index.Seven, "8": Index.Eight,
-    "9": Index.Nine, " ": Index.Space
-}
+const symbols: string[] = [
+    "A", "B", "C", "D", "E", "F", "G", "H", "I",
+    "J", "K", "L", "M", "N", "O", "P", "Q", "R",
+    "S", "T", "U", "V", "W", "X", "Y", "Z",
+    "a", "b", "c", "d", "e", "f", "g", "h", "i",
+    "j", "k", "l", "m", "n", "o", "p", "q", "r",
+    "s", "t", "u", "v", "w", "x", "y", "z",
+    "0", "1", "2", "3", "4", "5", "6", "7", "8",
+    "9", " ", "!", "@", "£", "#", "$", "%", "^",
+    "&", "*", "(", ")", "-", "_", "+", "=", "{",
+    "}", "[", "]", ":", ";", "\"", "'", "\\", "|",
+    "<", ">", ",", ".", "/", "?", "~"
+]
 
 type InternalVector<T> = [T, T];
 
-export type IndexVector = InternalVector<Index>;
+export type IndexVector = InternalVector<number>;
 export type StringVector = InternalVector<string>;
 
 export default class Cipher
@@ -60,10 +41,9 @@ export default class Cipher
 
     public static createKey(): string
     {
-        const availableCharacters = Cipher.getAvailableCharacters();
         const source: number[] = [];
 
-        for(let i = 0; i < Math.pow(availableCharacters.length, 2); i++)
+        for(let i = 0; i < Math.pow(symbols.length, 2); i++)
         {
             if(i === 0)
                 source.push(0);
@@ -86,14 +66,9 @@ export default class Cipher
         return Buffer.from(s, "base64").toString().split(",").map(n => parseInt(n));
     }
 
-    private static getAvailableCharacters()
-    {
-        return Object.keys(symbolToIndex);
-    }
-
     private static decodeSymbol(num: number): string
     {
-        let decoded = Index[num];
+        let decoded = symbols[num];
 
         switch(decoded)
         {
@@ -125,7 +100,7 @@ export default class Cipher
 
     public encode(source: string): string // Base64
     {
-        const characters = source.split("").map(c => symbolToIndex[c]);
+        const characters = source.split("").map(c => symbols.indexOf(c));
         const vectors: IndexVector[] = [];
         const out: number[] = [];
 
@@ -135,7 +110,7 @@ export default class Cipher
         for(const vector of vectors)
         {
             const flip =  Math.random() < 0.5;
-            const index = (vector[flip ? 1 : 0] * Cipher.getAvailableCharacters().length) + vector[flip ? 0 : 1];
+            const index = (vector[flip ? 1 : 0] * symbols.length) + vector[flip ? 0 : 1];
             out.push(this.keyValues[index]);
         }
 
@@ -151,8 +126,8 @@ export default class Cipher
         for(const num of encodedNumbers)
         {
             const index = this.keyValues.indexOf(num);
-            const Vector0 = Cipher.decodeSymbol(Math.floor(index / Cipher.getAvailableCharacters().length))
-            const Vector1 = Cipher.decodeSymbol(index % Cipher.getAvailableCharacters().length)
+            const Vector0 = Cipher.decodeSymbol(Math.floor(index / symbols.length))
+            const Vector1 = Cipher.decodeSymbol(index % symbols.length)
 
             decodedVectors.push([Vector0, Vector1]);
         }
