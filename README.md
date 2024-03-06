@@ -2,7 +2,7 @@
 
 It works, but its probably very inefficiant
 
-## Keg Generation
+## Key Generation
 
 It works by constructing a 2d array of symbols
 ```
