@@ -5,18 +5,21 @@ It works, but its probably very iunefficiant
 ## Keg Generation
 
 It works by constructing a 2d array of symbols
+```
    A  B  C  D ...
 A  0  1  2  3 ...
 B 24 25 26 27 ...
 C 48 49 50 51 ...
 D 72 73 74 75 ...
 ...
+```
 
 This is then shuffled to provide a key. this creates "(symbol count)^1 factorial" possible keys which is quite big imho haha
 
 ## Encoding
 To encode a string the string is split into vectors so Hello World would be:
 
+```
 H:E
 E:L
 L:L
@@ -27,6 +30,7 @@ W:O
 O:R
 R:L
 L:D
+```
 
 Where _ is a space character
 
