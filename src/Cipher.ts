@@ -1,16 +1,6 @@
 const symbols: string[] = [
-    "A", "B", "C", "D", "E", "F", "G", "H", "I",
-    "J", "K", "L", "M", "N", "O", "P", "Q", "R",
-    "S", "T", "U", "V", "W", "X", "Y", "Z",
-    "a", "b", "c", "d", "e", "f", "g", "h", "i",
-    "j", "k", "l", "m", "n", "o", "p", "q", "r",
-    "s", "t", "u", "v", "w", "x", "y", "z",
-    "0", "1", "2", "3", "4", "5", "6", "7", "8",
-    "9", " ", "!", "@", "£", "#", "$", "%", "^",
-    "&", "*", "(", ")", "-", "_", "+", "=", "{",
-    "}", "[", "]", ":", ";", "\"", "'", "\\", "|",
-    "<", ">", ",", ".", "/", "?", "~"
-]
+    "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", " ", "!", "@", "£", "#", "$", "%", "^", "&", "*", "(", ")", "-", "_", "+", "=", "{", "}", "[", "]", ":", ";", "\"", "'", "\\", "|", "<", ">", ",", ".", "/", "?", "~"
+];
 
 type InternalVector<T> = [T, T];
 
@@ -30,26 +20,25 @@ export default class Cipher
 
     private static shuffleArray(array: number[])
     {
-        for (var i = array.length - 1; i > 0; i--)
-        {
-            var j = Math.floor(Math.random() * (i + 1));
-            var temp = array[i];
-            array[i] = array[j];
-            array[j] = temp;
-        }
+        for (let i = array.length - 1; i > 0; i--)
+            Cipher.swapArrayNums(array, i, Math.floor(Math.random() * (i + 1)));
     }
+
+    private static swapArrayNums<T>(array: T[], i: number, j: number): void
+    {
+        const temp = array[i]
+        array[i] = array[j];
+        array[j] = temp;
+    }
+
+    private static swapVectors = <T>(a: InternalVector<T>) => Cipher.swapArrayNums(a, 0, 1);
 
     public static createKey(): string
     {
-        const source: number[] = [];
+        const source: number[] = [0];
 
-        for(let i = 0; i < Math.pow(symbols.length, 2); i++)
-        {
-            if(i === 0)
-                source.push(0);
-            else
-                source.push(source[i - 1] + 1)
-        }
+        for(let i = 1; i < Math.pow(symbols.length, 2); i++)
+            source.push(source[i - 1] + 1);
 
         Cipher.shuffleArray(source);
 
@@ -66,50 +55,33 @@ export default class Cipher
         return Buffer.from(s, "base64").toString().split(",").map(n => parseInt(n));
     }
 
-    private static decodeSymbol(num: number): string
-    {
-        let decoded = symbols[num];
-
-        switch(decoded)
-        {
-            case "Space":
-                return " ";
-            default:
-                return decoded;
-        }
-    }
-
-    private static findCommonSymbol(a: StringVector, b: StringVector): 0 | 1 | 2 | 3 | null
+    private static processCommonSymbol(a: StringVector, b: StringVector): void
     {
         if(b.indexOf(a[0]) === 0) // [X .] [X .] // Should only occur on the 1st pair
-            return 0;
+            Cipher.swapVectors(a);
         else if(b.indexOf(a[1]) === 0) // [. X] [X .]
-            return 1;
+        {}    // NOP
         else if(b.indexOf(a[0]) === 1) // [X .] [. X] // Should only occur on the first pair
-            return 2;
+        {
+            Cipher.swapVectors(a);
+            Cipher.swapVectors(b);
+        }
         else if(b.indexOf(a[1]) === 1) // [. X] [. X]
-            return 3;
+            Cipher.swapVectors(b);
         else
-            return null;
-    }
-
-    private static swapVectors<T>(a: InternalVector<T>): InternalVector<T>
-    {
-        return [a[1], a[0]];
+            throw Error("Unscramble not possible");
     }
 
     public encode(source: string): string // Base64
     {
         const characters = source.split("").map(c => symbols.indexOf(c));
-        const vectors: IndexVector[] = [];
         const out: number[] = [];
 
         for(let i = 0; i < characters.length - 1; i++)
-            vectors.push([characters[i], characters[i + 1]]);
-
-        for(const vector of vectors)
         {
+            const vector = [characters[i], characters[i + 1]];
             const flip =  Math.random() < 0.5;
+
             out.push(this.keyValues[(vector[flip ? 1 : 0] * symbols.length) + vector[flip ? 0 : 1]]);
         }
 
@@ -118,38 +90,16 @@ export default class Cipher
 
     public decode(encoded: string): string
     {
-        const encodedNumbers = Cipher.parse(encoded)
         const decodedVectors: StringVector[] = [];
 
-        for(const num of encodedNumbers)
+        for(const num of Cipher.parse(encoded))
         {
             const index = this.keyValues.indexOf(num);
-            decodedVectors.push([Cipher.decodeSymbol(Math.floor(index / symbols.length)), Cipher.decodeSymbol(index % symbols.length)]);
+            decodedVectors.push([symbols[Math.floor(index / symbols.length)], symbols[index % symbols.length]]);
         }
 
         for(let i = 0; i < decodedVectors.length -1; i++)
-        {
-            const result = Cipher.findCommonSymbol(decodedVectors[i], decodedVectors[i + 1]);
-            if(result === null)
-                throw Error("Unscramble not possible")
-
-            switch (result)
-            {
-                case 0: // [X .] [X .] // Should only occur on the 1st pair
-                    decodedVectors[i] = Cipher.swapVectors(decodedVectors[i]);
-                    break;
-                case 1: // [. X] [X .]
-                    // This one's correct
-                    break;
-                case 2: // [X .] [. X] // Should only occur on the first pair
-                    decodedVectors[i] = Cipher.swapVectors(decodedVectors[i]);
-                    decodedVectors[i + 1] = Cipher.swapVectors(decodedVectors[i + 1]);
-                    break;
-                case 3: // [. X] [. X]
-                    decodedVectors[i + 1] = Cipher.swapVectors(decodedVectors[i + 1]);
-                    break;
-            }
-        }
+            Cipher.processCommonSymbol(decodedVectors[i], decodedVectors[i + 1]);
 
         return [...decodedVectors.map(v => v[0]), decodedVectors[decodedVectors.length -1][1]].join("");
     }
