@@ -2,10 +2,7 @@ const symbols: string[] = [
     "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", " ", "!", "@", "£", "#", "$", "%", "^", "&", "*", "(", ")", "-", "_", "+", "=", "{", "}", "[", "]", ":", ";", "\"", "'", "\\", "|", "<", ">", ",", ".", "/", "?", "~"
 ];
 
-type InternalVector<T> = [T, T];
-
-export type IndexVector = InternalVector<number>;
-export type StringVector = InternalVector<string>;
+type StringVector = [string, string];
 
 export default class Cipher
 {
@@ -18,20 +15,12 @@ export default class Cipher
         this.keyValues = Cipher.parse(key);
     }
 
-    private static shuffleArray(array: number[])
-    {
-        for (let i = array.length - 1; i > 0; i--)
-            Cipher.swapArrayNums(array, i, Math.floor(Math.random() * (i + 1)));
-    }
-
     private static swapArrayNums<T>(array: T[], i: number, j: number): void
     {
-        const temp = array[i]
-        array[i] = array[j];
-        array[j] = temp;
+        [array[i], array[j]] = [array[j], array[i]]; // This is deffo magic...
     }
 
-    private static swapVectors = <T>(a: InternalVector<T>) => Cipher.swapArrayNums(a, 0, 1);
+    private static swapVectors = <T>(a: StringVector) => Cipher.swapArrayNums(a, 0, 1);
 
     public static createKey(): string
     {
@@ -40,7 +29,8 @@ export default class Cipher
         for(let i = 1; i < Math.pow(symbols.length, 2); i++)
             source.push(source[i - 1] + 1);
 
-        Cipher.shuffleArray(source);
+        for (let i = source.length - 1; i > 0; i--)
+            Cipher.swapArrayNums(source, i, Math.floor(Math.random() * (i + 1)));
 
         return Cipher.stringify(source);
     }
@@ -57,19 +47,11 @@ export default class Cipher
 
     private static processCommonSymbol(a: StringVector, b: StringVector): void
     {
-        if(b.indexOf(a[0]) === 0) // [X .] [X .] // Should only occur on the 1st pair
+        if(b.indexOf(a[0]) > -1)// [X .] [? ?]
             Cipher.swapVectors(a);
-        else if(b.indexOf(a[1]) === 0) // [. X] [X .]
-        {}    // NOP
-        else if(b.indexOf(a[0]) === 1) // [X .] [. X] // Should only occur on the first pair
-        {
-            Cipher.swapVectors(a);
+
+        if(b.indexOf(a[0]) === 1 || b.indexOf(a[1]) === 1) // [? ?] [. X]
             Cipher.swapVectors(b);
-        }
-        else if(b.indexOf(a[1]) === 1) // [. X] [. X]
-            Cipher.swapVectors(b);
-        else
-            throw Error("Unscramble not possible");
     }
 
     public encode(source: string): string // Base64
@@ -82,7 +64,7 @@ export default class Cipher
             const vector = [characters[i], characters[i + 1]];
             const flip =  Math.random() < 0.5;
 
-            out.push(this.keyValues[(vector[flip ? 1 : 0] * symbols.length) + vector[flip ? 0 : 1]]);
+            out.push(this.keyValues[(vector[+flip] * symbols.length) + vector[+(!flip)]]);
         }
 
         return Cipher.stringify(out);
@@ -96,10 +78,10 @@ export default class Cipher
         {
             const index = this.keyValues.indexOf(num);
             decodedVectors.push([symbols[Math.floor(index / symbols.length)], symbols[index % symbols.length]]);
-        }
 
-        for(let i = 0; i < decodedVectors.length -1; i++)
-            Cipher.processCommonSymbol(decodedVectors[i], decodedVectors[i + 1]);
+            if(decodedVectors.length > 1)
+                Cipher.processCommonSymbol(decodedVectors[decodedVectors.length - 2], decodedVectors[decodedVectors.length - 1]);
+        }
 
         return [...decodedVectors.map(v => v[0]), decodedVectors[decodedVectors.length -1][1]].join("");
     }
