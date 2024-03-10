@@ -58,4 +58,4 @@ This is then compressed down into the final decoded message
 - This is not encryption
 - This suffers from the same issues as XOR encoding where changing a single entry in the output integer array will change the encoded message.
    - It will likely fail to decode due to the likelyhood that there are no common pairs between vectors
-- This is completely mad and done simply as a proof of concept. You use this soully at your own discretion and it shouldn't be considered production ready (or ready for any use case tbh) 
+- This is completely mad and done simply as a proof of concept. You use this solely at your own discretion and it shouldn't be considered production ready (or ready for any use case tbh) 
